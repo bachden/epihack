@@ -1,0 +1,41 @@
+<mario>
+	<name>epihack-gateway</name>
+
+	<servers>
+		<http>
+			<name>http_server_port_10080</name>
+			<port>10080</port>
+			<options>no_sessions</options>
+		</http>
+	</servers>
+
+	<gateways>
+		<http>
+			<name>epihack_default_http_gateway</name>
+			<server>http_server_port_10080</server>
+			<path>/default</path>
+			<usemultipart>true</usemultipart>
+			<encoding>utf-8</encoding>
+			<async>true</async>
+			<workerpool>
+				<poolsize>8</poolsize>
+				<ringbuffersize>2048</ringbuffersize>
+				<threadnamepattern>Epihack HTTP Worker #%d</threadnamepattern>
+			</workerpool>
+		</http>
+	</gateways>
+
+	<lifecycles>
+		<handler>
+			<name>wallet-handler</name>
+			<handle>org.epihack.vn2017.gateway.EpihackDefaultGatewayHandler</handle>
+			<bind>
+				<gateway>epihack_default_http_gateway</gateway>
+			</bind>
+			<variables>
+				<variable name="test" type="string">this is test text</variable>
+			</variables>
+		</handler>
+	</lifecycles>
+
+</mario>
