@@ -1,0 +1,58 @@
+<mario>
+	<name>epihack-crawler</name>
+
+	<external>
+		<configuration>
+			<name>keywordsConfig</name>
+			<path>conf/keywords.txt</path>
+			<monitored>true</monitored>
+			<sensitivity>HIGH</sensitivity>
+			<parser>
+				<handler>com.mario.external.configuration.parser.TextAsLinesParser</handler>
+			</parser>
+		</configuration>
+		<configuration>
+			<name>urlsConfig</name>
+			<path>conf/urls.txt</path>
+			<monitored>true</monitored>
+			<sensitivity>HIGH</sensitivity>
+			<parser>
+				<handler>com.mario.external.configuration.parser.TextAsLinesParser</handler>
+			</parser>
+		</configuration>
+	</external>
+
+	<datasources>
+		<sql>
+			<name>crawler-mysql-datasource</name>
+			<variables>
+				<!-- everything in this block will override config in file spec by properties file tag -->
+				<!-- the content will replace recursively the data in the ref property -->
+				<variable name="url" type="string">jdbc:mysql://localhost:3306/epihack_crawler</variable>
+				<variable name="driverClassName" type="string">com.mysql.jdbc.Driver</variable>
+				<variable name="username" type="string">epihack</variable>
+				<variable name="password" type="string">123456</variable>
+				<!-- <variable name="validatorClassName" type="string"></variable> -->
+				<variable name="minPool" type="integer">4</variable>
+				<variable name="maxPool" type="integer">32</variable>
+				<!-- <variable name="maxSize" type="integer"></variable> -->
+				<variable name="idleTimeout" type="integer">10000</variable>
+				<variable name="loginTimeout" type="integer">10000</variable>
+			</variables>
+		</sql>
+	</datasources>
+
+	<lifecycles>
+		<handler>
+			<name>crawling-handler</name>
+			<handle>org.epihack.vn2017.crawler.CrawlingHandler</handle>
+			<variables>
+				<variable name="keywordsConfig" type="string">keywordsConfig</variable>
+				<variable name="urlsConfig" type="string">urlsConfig</variable>
+				<variable name="modelMappingFile" type="string">conf/model-mapping.properties</variable>
+				<variable name="mysqlDatasourceName" type="string">crawler-mysql-datasource</variable>
+			</variables>
+		</handler>
+	</lifecycles>
+
+</mario>
