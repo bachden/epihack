@@ -1,0 +1,109 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>epihack-crawler</artifactId>
+
+	<properties>
+		<project.dist>dist</project.dist>
+		<project.dist.ext>${project.dist}/${project.name}</project.dist.ext>
+	</properties>
+
+	<parent>
+		<groupId>org.epihack.vn2017</groupId>
+		<artifactId>epihack-base</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<build>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<testSourceDirectory>src/test/java</testSourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<property file="${project.basedir}/runtime.properties" />
+								<delete failonerror="false">
+									<fileset dir="${project.dist.ext}" />
+								</delete>
+								<mkdir dir="${project.dist.ext}" />
+								<copy todir="${project.dist.ext}">
+									<fileset dir="${project.basedir}">
+										<include name="extension.xml" />
+									</fileset>
+								</copy>
+								<copy todir="${project.dist.ext}/conf" failonerror="false">
+									<fileset dir="${project.basedir}/conf" />
+								</copy>
+								<copy todir="${project.dist.ext}/lib">
+									<fileset dir="${project.build.directory}">
+										<exclude name="*-sources.jar" />
+										<exclude name="*-javadoc.jar" />
+										<include name="*.jar" />
+									</fileset>
+								</copy>
+								<echo file="${project.dist.ext}/version.txt" append="false">${project.version}</echo>
+								<echo>Using datadir: ${data.dir}</echo>
+								<echo>Using network params: ${network.params}</echo>
+								<replace file="${project.dist.ext}/extension.xml" token="{{data.dir}}" value="${data.dir}" />
+								<replace file="${project.dist.ext}/extension.xml" token="{{network.params}}" value="${network.params}" />
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>local-deploy</id>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<delete failonerror="false" dir="${deploy.path}/${project.dist.ext}" />
+								<property file="${project.basedir}/build.properties" />
+								<copy todir="${deploy.path}">
+									<fileset dir="${project.dist}" />
+								</copy>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.dist.ext}/lib</outputDirectory>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+							<excludeScope>provided</excludeScope>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>nhb</groupId>
+			<artifactId>mario</artifactId>
+		</dependency>
+	</dependencies>
+</project>
