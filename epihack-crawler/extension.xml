@@ -20,6 +20,15 @@
 				<handler>com.mario.external.configuration.parser.TextAsLinesParser</handler>
 			</parser>
 		</configuration>
+		<configuration>
+			<name>htmlExtractorsConfig</name>
+			<path>conf/extractor-config.yaml</path>
+			<monitored>true</monitored>
+			<sensitivity>HIGH</sensitivity>
+			<parser>
+				<handler>com.mario.external.configuration.parser.YamlFileParser</handler>
+			</parser>
+		</configuration>
 	</external>
 
 	<datasources>
@@ -47,10 +56,15 @@
 			<name>crawling-handler</name>
 			<handle>org.epihack.vn2017.crawler.CrawlingHandler</handle>
 			<variables>
-				<variable name="keywordsConfig" type="string">keywordsConfig</variable>
 				<variable name="urlsConfig" type="string">urlsConfig</variable>
+				<variable name="keywordsConfig" type="string">keywordsConfig</variable>
+				<variable name="htmlExtractorConfig" type="String">htmlExtractorsConfig</variable>
+
 				<variable name="modelMappingFile" type="string">conf/model-mapping.properties</variable>
 				<variable name="mysqlDatasourceName" type="string">crawler-mysql-datasource</variable>
+
+				<variable name="rescanDelaySeconds" type="long">300</variable>
+				<varibale name="parsersConfig" type="String"></varibale>
 			</variables>
 		</handler>
 	</lifecycles>

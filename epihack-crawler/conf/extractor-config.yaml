@@ -1,0 +1,18 @@
+- !org.epihack.vn2017.crawler.extractor.ExtractorConfig
+  urlPrefix: https://vnexpress.net
+  handler: org.epihack.vn2017.crawler.extractor.impl.DefaultHtmlExtractor
+  config:
+    timeSelector: .sidebar_1 .time 
+    titleSelector: .sidebar_1 .title_news_detail
+    shortDescriptionSelector: .sidebar_1 .description
+    contentSelector: .sidebar_1 article.content_detail
+
+- !org.epihack.vn2017.crawler.extractor.ExtractorConfig
+  urlPrefix: https://suckhoe.vnexpress.net
+  handler: org.epihack.vn2017.crawler.extractor.impl.DefaultHtmlExtractor
+  config:
+    timeSelector: .sidebar_1 .time 
+    titleSelector: .sidebar_1 .title_news_detail
+    shortDescriptionSelector: .sidebar_1 .description
+    contentSelector: .sidebar_1 article.content_detail
+    
