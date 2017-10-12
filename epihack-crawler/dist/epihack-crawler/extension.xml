@@ -49,7 +49,7 @@
 			<variables>
 				<!-- everything in this block will override config in file spec by properties file tag -->
 				<!-- the content will replace recursively the data in the ref property -->
-				<variable name="url" type="string"><![CDATA[jdbc:mysql://localhost:3306/epihack_crawler?useUnicode=true&characterEncoding=UTF-8]]></variable>
+				<variable name="url" type="string"><![CDATA[jdbc:mysql://localhost:3306/epihack_crawler_final?useUnicode=true&characterEncoding=UTF-8]]></variable>
 				<variable name="driverClassName" type="string">com.mysql.jdbc.Driver</variable>
 				<variable name="username" type="string">epihack</variable>
 				<variable name="password" type="string">123456</variable>

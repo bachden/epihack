@@ -60,6 +60,9 @@ public class DefaultHtmlExtractor extends AbstractHtmlExtractor {
 
 	protected Date extractTime(Document document) {
 		String timeStr = this.getText(document, this.getTimeSelector());
+		if (timeStr == null) {
+			return null;
+		}
 
 		Map<String, String> timeFormat = this.getTimeFormat();
 

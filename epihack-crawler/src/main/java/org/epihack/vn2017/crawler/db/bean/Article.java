@@ -56,6 +56,7 @@ public class Article extends UUIDBean {
 		puo.set("content", this.getContent());
 		puo.set("provinceName", this.getProvince());
 		puo.set("time", this.getTimestamp());
+		puo.set("url", this.getUrl());
 		puo.set("detected", detected);
 
 		return puo;

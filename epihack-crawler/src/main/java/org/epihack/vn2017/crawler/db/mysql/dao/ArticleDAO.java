@@ -21,7 +21,8 @@ public abstract class ArticleDAO extends MySqlEpihackBaseDAO {
 			+ "  `content` text COLLATE utf8_unicode_ci,\n"
 			+ "  `disease` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,\n"
 			+ "  `group` char(1) COLLATE utf8_unicode_ci DEFAULT NULL,\n"
-			+ "  `province` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,\n" + "  PRIMARY KEY (`id`),\n"
+			+ "  `province` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,\n"
+			+ "  `status` tinyint(1) NOT NULL DEFAULT '0',\n" + "  PRIMARY KEY (`id`),\n"
 			+ "  UNIQUE KEY `url_UNIQUE` (`url`),\n" + "  KEY `group_index` (`group`),\n"
 			+ "  KEY `province_index` (`province`),\n" + "  KEY `disease_index` (`disease`)\n"
 			+ ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci")

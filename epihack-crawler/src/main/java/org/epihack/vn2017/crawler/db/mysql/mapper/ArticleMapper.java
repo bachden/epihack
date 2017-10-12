@@ -22,6 +22,7 @@ public class ArticleMapper implements ResultSetMapper<Article> {
 		result.setStatus(r.getInt("status"));
 		result.setTitle(r.getString("title"));
 		result.setId(r.getBytes("id"));
+		result.setUrl(r.getString("url"));
 		return result;
 	}
 

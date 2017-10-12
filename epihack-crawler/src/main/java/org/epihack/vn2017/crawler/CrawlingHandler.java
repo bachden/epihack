@@ -436,7 +436,7 @@ public class CrawlingHandler extends BaseMessageHandler {
 			@Override
 			public void call() {
 				if (waitingUrls.size() == 0) {
-					Collection<UrlBean> fetchAvailableUrl = urlModel.fetchAvailableUrls(rescanDelaySeconds * 10000);
+					Collection<UrlBean> fetchAvailableUrl = urlModel.fetchAvailableUrls(rescanDelaySeconds * 1000);
 					for (UrlBean bean : fetchAvailableUrl) {
 						waitingUrls.add(bean.getUrl());
 					}

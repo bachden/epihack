@@ -33,4 +33,21 @@
     titleSelector: .sidebar_1 .title_news_detail
     shortDescriptionSelector: .sidebar_1 .description
     contentSelector: .sidebar_1 article.content_detail
+- !org.epihack.vn2017.crawler.extractor.ExtractorConfig
+  urlPrefix: https://timkiem.vnexpress.net
+  handler: org.epihack.vn2017.crawler.extractor.impl.DefaultHtmlExtractor
+  config:
+    timeFormat: 
+      pattern: > 
+              ([A-Za-z ]+), (\d{1,2})\/(\d{1,2})\/(\d{4}) \| (\d{1,2}):(\d{1,2}) GMT\+(\d)
+      dateGroupId: 2
+      monthGroupId: 3
+      yearGroupId: 4
+      hourGroupId: 5
+      minuteGroupId: 6
+      timezoneGroupId: 7
+    timeSelector: .sidebar_1 .time 
+    titleSelector: .sidebar_1 .title_news_detail
+    shortDescriptionSelector: .sidebar_1 .description
+    contentSelector: .sidebar_1 article.content_detail
     
