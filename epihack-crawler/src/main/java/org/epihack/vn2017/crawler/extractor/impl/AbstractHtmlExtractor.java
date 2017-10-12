@@ -2,6 +2,7 @@ package org.epihack.vn2017.crawler.extractor.impl;
 
 import java.util.Map;
 
+import org.epihack.vn2017.crawler.CrawlingUtils;
 import org.epihack.vn2017.crawler.extractor.HtmlExtractor;
 import org.epihack.vn2017.crawler.extractor.HtmlExtractorConfigAware;
 
@@ -16,4 +17,8 @@ public abstract class AbstractHtmlExtractor implements HtmlExtractor, HtmlExtrac
 	@Setter
 	@Getter(AccessLevel.PROTECTED)
 	private Map<String, Object> config;
+
+	protected String stripUTF8(String utf8String) {
+		return CrawlingUtils.removeAccent(utf8String);
+	}
 }

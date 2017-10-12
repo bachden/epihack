@@ -1,0 +1,219 @@
+groupA: 
+  - !org.epihack.vn2017.crawler.Disease
+    name: bại liệt
+    keywords: 
+      - bai liet
+  - !org.epihack.vn2017.crawler.Disease
+    name: bạch hầu
+    keywords: 
+      - bach hau
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh do liên cầu lợn ở người
+    keywords:
+      - lien cau lon
+      - benh do lien cau lon o nguoi
+      - lien cau lon o nguoi
+  - !org.epihack.vn2017.crawler.Disease
+    name: cúm a(h5n1)
+    keywords:
+      - cúm a h5n1
+      - cum a h5n1
+      - h5n1
+  - !org.epihack.vn2017.crawler.Disease
+    name: cúm a(h7n9)
+    keywords: 
+      - cúm a h7n9
+      - cum a h7n9
+  - !org.epihack.vn2017.crawler.Disease
+    name: dịch hạch
+    keywords: 
+      - dich hach
+  - !org.epihack.vn2017.crawler.Disease
+    name: ê-bô-la (ebolla)
+    keywords: 
+      - ebolla
+      - ê bô la
+      - e bo la
+  - !org.epihack.vn2017.crawler.Disease
+    name: lát-sa (lassa)
+    keywords: 
+      - lat-sa
+      - lat sa
+      - lassa
+      - lat-sa (lassa)
+  - !org.epihack.vn2017.crawler.Disease
+    name: mác-bớt (marburg)
+    keywords: 
+      - mac-bot
+      - mac-bot (marburg)
+      - mac bot (marburg)
+      - marburg
+  - !org.epihack.vn2017.crawler.Disease
+    name: rubella (rubeon)
+    keywords:
+      - rubella
+      - rubeon
+  - !org.epihack.vn2017.crawler.Disease
+    name: sốt tây sông nin
+    keywords:
+      - sot tay song nin
+      - sot song nin
+  - !org.epihack.vn2017.crawler.Disease
+    name: sốt vàng
+    keywords:
+      - sot vang
+  - !org.epihack.vn2017.crawler.Disease
+    name: sốt xuất huyết dengue
+    keywords:
+      - sot xuat huyet
+      - dengue
+  - !org.epihack.vn2017.crawler.Disease
+    name: sởi
+    keywords: 
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh tả
+    keywords:
+      - benh ta
+      - dich ta
+      - dịch tả
+  - !org.epihack.vn2017.crawler.Disease
+    name: tay - chân - miệng
+    keywords:
+      - tay chan mieng
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh than
+    keywords:
+      - dịch than
+      - benh than
+      - dich than
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm đường hô hấp trung đông do corona vi rút (mers cov)
+    keywords:
+      - viem duong ho hap trung dong
+      - viêm đường hô hấp trung đông
+      - viem duong ho hap trung dong do corona vi rut
+      - viem duong ho hap trung dong do corona virus
+      - viêm đường hô hấp trung đông do corona virus
+      - mers cov
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm màng não do não mô cầu
+    keywords:
+      - viem mang nao do nao mo cau
+      - viem mang nao do mo cau
+      - viêm màng não do mô cầu
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh truyền nhiễm nguy hiểm mới nổi và bệnh mới phát sinh chưa rõ tác nhân gây bệnh
+    keywords:
+      - bệnh truyền nhiễm nguy hiểm mới nổi
+      - bệnh mới phát sinh chưa rõ tác nhân gây bệnh
+      - benh truyen nhiem nguy hiem moi noi
+      - benh moi phat sinh chua ro tac nhan gay benh
+groupB:
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh dại
+    keywords:
+      - benh dai
+      - cho dai
+      - chó dại
+  - !org.epihack.vn2017.crawler.Disease
+    name: ho gà
+    keywords:
+      - ho ga
+  - !org.epihack.vn2017.crawler.Disease
+    name: liệt mềm cấp nghi bại liệt
+    keywords:
+      - liet mem cap nghi bai liet
+      - liệt mềm cấp
+      - liet mem cap
+  - !org.epihack.vn2017.crawler.Disease
+    name: lao phổi
+    keywords:
+      - lao phoi
+  - !org.epihack.vn2017.crawler.Disease
+    name: sốt rét 
+    keywords:
+      - sot ret
+  - !org.epihack.vn2017.crawler.Disease
+    name: thương hàn
+    keywords:
+      - thuong han
+  - !org.epihack.vn2017.crawler.Disease
+    name: uốn ván sơ sinh 
+    keywords: 
+      - uon van so sinh
+  - !org.epihack.vn2017.crawler.Disease
+    name: uốn ván khác
+    keywords:
+      - uon van khac
+      - uon van
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm gan vi rút a
+    keywords:
+      - viem gan vi rut a
+      - viem gan virus a
+      - viêm gan virus a
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm gan vi rút b
+    keywords:
+      - viem gan vi rut b
+      - viêm gan virus b
+      - viem gan virus b
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm gan vi rút c
+    keywords:
+      - viem gan vi rut c
+      - viêm gan virus c
+      - viem gan virus c
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm não nhật bản 
+    keywords:
+      - viem nao nhat ban
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm não vi rút khác
+    keywords:
+      - viem nao vi rut
+      - viem nao virus
+  - !org.epihack.vn2017.crawler.Disease
+    name: xoắn khuẩn vàng da (leptospira)
+    keywords:
+      - xoan khuan vang da
+      - leptospira
+  
+groupC:
+  - !org.epihack.vn2017.crawler.Disease
+    name: bệnh do vi rút adeno
+    keywords:
+      - vi rút adeno
+      - virus adeno
+  - !org.epihack.vn2017.crawler.Disease
+    name: cúm
+    keywords:
+      - cum
+  - !org.epihack.vn2017.crawler.Disease
+    name: lỵ amíp
+    keywords:
+      - li amip
+      - ly amip
+  - !org.epihack.vn2017.crawler.Disease
+    name: lỵ trực trùng
+    keywords:
+      - ly truc trung
+      - li truc trung
+  - !org.epihack.vn2017.crawler.Disease
+    name: quai bị
+    keywords:
+      - quai bi
+  - !org.epihack.vn2017.crawler.Disease
+    name: thuỷ đậu
+    keywords:
+      - thuy dau
+  - !org.epihack.vn2017.crawler.Disease
+    name: tiêu chảy
+    keywords:
+      - tieu chay
+  - !org.epihack.vn2017.crawler.Disease
+    name: viêm gan vi rút khác (hoặc không có chẩn đoán xác định)
+    keywords:
+      - viem gan vi rut khac
+      - viem gan virus khac
+ 

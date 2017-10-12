@@ -5,8 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -15,21 +18,29 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.epihack.vn2017.crawler.db.ArticleModel;
 import org.epihack.vn2017.crawler.db.UrlModel;
+import org.epihack.vn2017.crawler.db.bean.Article;
+import org.epihack.vn2017.crawler.db.bean.DiseaseNumCases;
 import org.epihack.vn2017.crawler.db.bean.UrlBean;
-import org.epihack.vn2017.crawler.extractor.Article;
 import org.epihack.vn2017.crawler.extractor.ExtractorConfig;
 import org.epihack.vn2017.crawler.extractor.HtmlExtractor;
 import org.epihack.vn2017.crawler.extractor.HtmlExtractorFactory;
 
 import com.mario.entity.impl.BaseMessageHandler;
+import com.mario.entity.message.Message;
 import com.mario.external.configuration.ExternalConfiguration;
 import com.mario.schedule.ScheduledCallback;
 import com.nhb.common.async.Callback;
+import com.nhb.common.data.MapTuple;
+import com.nhb.common.data.PuArray;
+import com.nhb.common.data.PuArrayList;
+import com.nhb.common.data.PuElement;
+import com.nhb.common.data.PuObject;
 import com.nhb.common.data.PuObjectRO;
 import com.nhb.common.db.models.ModelFactory;
+import com.nhb.common.utils.Converter;
 import com.nhb.common.utils.FileSystemUtils;
-import com.nhb.common.utils.StringUtils;
 
 import lombok.Getter;
 
@@ -37,8 +48,10 @@ public class CrawlingHandler extends BaseMessageHandler {
 
 	private ModelFactory modelFactory;
 
+	private Diseases diseases;
+
 	@Getter
-	private Collection<String> keywords;
+	private Collection<String> provinces;
 
 	private UrlModel urlModel;
 
@@ -52,7 +65,16 @@ public class CrawlingHandler extends BaseMessageHandler {
 
 	private final int numWorkers = 32;
 	private final ExecutorService executor = Executors.newFixedThreadPool(numWorkers);
-	private final List<String> waitingForCrawlingUrls = new CopyOnWriteArrayList<>();
+	private final List<String> waitingUrls = new CopyOnWriteArrayList<>();
+
+	private ArticleModel articleModel;
+
+	private Map<String, Integer> articleStatuses = new HashMap<>();
+	{
+		articleStatuses.put("accepted", 1);
+		articleStatuses.put("rejected", 2);
+		articleStatuses.put("ignored", 3);
+	}
 
 	@Override
 	public void init(PuObjectRO initParams) {
@@ -68,8 +90,8 @@ public class CrawlingHandler extends BaseMessageHandler {
 			throw new RuntimeException("Error while init model factory", e);
 		}
 
-		String keywordsConfName = initParams.getString("keywordsConfig", null);
-		initKeywords(keywordsConfName);
+		String diseasesConfName = initParams.getString("diseasesConfig", null);
+		initDiseases(diseasesConfName);
 
 		String urlsConfName = initParams.getString("urlsConfig", null);
 		initUrls(urlsConfName);
@@ -77,7 +99,28 @@ public class CrawlingHandler extends BaseMessageHandler {
 		String extractorConfigName = initParams.getString("htmlExtractorConfig", null);
 		initExtractors(extractorConfigName);
 
+		String provincesConfigName = initParams.getString("provincesConfig", null);
+		initProvinces(provincesConfigName);
+
 		this.fetcher = new HtmlFetcher();
+	}
+
+	private void initProvinces(String provincesConfigName) {
+		if (provincesConfigName == null) {
+			throw new NullPointerException("Provinces config name cannot be null");
+		}
+		this.provinces = new HashSet<>();
+		ExternalConfiguration configuration = this.getApi().getExternalConfiguration(provincesConfigName);
+		this.provinces.addAll(configuration.get());
+
+		configuration.addUpdateListener(new Callback<Collection<String>>() {
+
+			@Override
+			public void apply(Collection<String> configs) {
+				provinces.clear();
+				provinces.addAll(configuration.get());
+			}
+		});
 	}
 
 	@Override
@@ -155,19 +198,22 @@ public class CrawlingHandler extends BaseMessageHandler {
 		urlUpdater.run();
 	}
 
-	private void initKeywords(String keywordsConfName) {
+	private void initDiseases(String keywordsConfName) {
 		if (keywordsConfName == null) {
 			throw new NullPointerException("keywords config name cannot be null");
 		}
 		ExternalConfiguration config = getApi().getExternalConfiguration(keywordsConfName);
-		this.keywords = config.get();
-		config.addUpdateListener(new Callback<Collection<String>>() {
+
+		this.diseases = config.get();
+		config.addUpdateListener(new Callback<Diseases>() {
 
 			@Override
-			public void apply(Collection<String> keywords) {
-				CrawlingHandler.this.keywords = keywords;
+			public void apply(Diseases diseases) {
+				CrawlingHandler.this.diseases = diseases;
 			}
 		});
+
+		getLogger().debug("diseases: " + this.diseases);
 	}
 
 	private void initModelFactory(String modelMappingFile, String mysqlDatasource)
@@ -181,9 +227,15 @@ public class CrawlingHandler extends BaseMessageHandler {
 			props.load(is);
 			this.modelFactory.addClassImplMapping(props);
 		}
+
 		this.urlModel = this.modelFactory.getModel(UrlModel.class.getName());
 		if (!urlModel.checkTableExists()) {
 			urlModel.createTable();
+		}
+
+		articleModel = this.modelFactory.getModel(ArticleModel.class.getName());
+		if (!articleModel.checkTableExists()) {
+			articleModel.createTable();
 		}
 	}
 
@@ -201,12 +253,80 @@ public class CrawlingHandler extends BaseMessageHandler {
 		this.urlModel.updateLastScanTime(url, System.currentTimeMillis());
 	}
 
+	private String[] searchForDiseaseAndProvince(String... arr) {
+		String group = null;
+		String foundDisease = null;
+		String foundProvince = null;
+
+		for (String text : arr) {
+			if (text != null) {
+				text = text.toLowerCase();
+				for (Disease disease : diseases.getGroupA()) {
+					Collection<String> keywords = new HashSet<>();
+					keywords.add(disease.getName());
+					if (disease.getKeywords() != null) {
+						keywords.addAll(disease.getKeywords());
+					}
+					for (String keyword : keywords) {
+						if (text.contains(keyword)) {
+							foundDisease = disease.getName();
+							group = "a";
+							break;
+						}
+					}
+				}
+
+				for (Disease disease : diseases.getGroupB()) {
+					Collection<String> keywords = new HashSet<>();
+					keywords.add(disease.getName());
+					if (disease.getKeywords() != null) {
+						keywords.addAll(disease.getKeywords());
+					}
+					for (String keyword : keywords) {
+						if (text.contains(keyword)) {
+							foundDisease = disease.getName();
+							group = "b";
+							break;
+						}
+					}
+				}
+
+				for (Disease disease : diseases.getGroupC()) {
+					Collection<String> keywords = new HashSet<>();
+					keywords.add(disease.getName());
+					if (disease.getKeywords() != null) {
+						keywords.addAll(disease.getKeywords());
+					}
+					for (String keyword : keywords) {
+						if (text.contains(keyword)) {
+							foundDisease = disease.getName();
+							group = "c";
+							break;
+						}
+					}
+				}
+
+				for (String province : provinces) {
+					if (text.contains(province)) {
+						foundProvince = province;
+						break;
+					}
+				}
+
+				if (foundDisease != null && foundProvince != null) {
+					break;
+				}
+			}
+		}
+
+		return new String[] { foundDisease == null ? "none" : foundDisease, group,
+				foundProvince == null ? "none" : foundProvince };
+	}
+
 	private void crawl(final String url) {
 		if (url == null) {
 			return;
 		}
-
-		getLogger().debug("continue crawl url: {}", url);
 
 		String trimedUrl = url.trim();
 		crawlingCount.incrementAndGet();
@@ -220,24 +340,22 @@ public class CrawlingHandler extends BaseMessageHandler {
 				if (html != null) {
 					HtmlExtractor extractor = extractorFactory.getExtractor(trimedUrl);
 					if (extractor != null) {
-						Article article = extractor.extract(html);
+						Article article = null;
+						try {
+							article = extractor.extract(html);
+						} catch (Exception e) {
+							getLogger().error("Error white extract html from url: {}", trimedUrl, e);
+						}
 						if (article != null) {
-							getLogger().debug("article: {}", article);
-							StringBuilder pattern = new StringBuilder();
-							for (String keyword : keywords) {
-								if (pattern.length() > 0) {
-									pattern.append("|");
-								}
-								pattern.append("(").append(keyword).append(")");
-							}
-							String p = pattern.toString();
+							String[] arr = searchForDiseaseAndProvince(article.getContent(), article.getTitle(),
+									article.getShortDescription());
 
-							String content = article.getContent();
-							String title = article.getTitle();
-							String shortDescription = article.getShortDescription();
-							if ((content != null && StringUtils.match(content, p)) //
-									|| (title != null && StringUtils.match(title, p)) //
-									|| (shortDescription != null && StringUtils.match(shortDescription, p))) {
+							article.setDisease(arr[0]);
+							article.setGroup(arr[1]);
+							article.setProvince(arr[2]);
+							article.setUrl(trimedUrl);
+
+							if (!article.getDisease().equals("none")) {
 								saveArticle(article);
 							}
 
@@ -256,7 +374,7 @@ public class CrawlingHandler extends BaseMessageHandler {
 							}
 							addUrls(urls);
 						} else {
-							getLogger().debug("got data but cannot extract: " + html);
+							getLogger().debug("got data but cannot extract: " + trimedUrl);
 						}
 					} else {
 						getLogger().warn("Extractor not found for url {}", trimedUrl);
@@ -268,15 +386,30 @@ public class CrawlingHandler extends BaseMessageHandler {
 	}
 
 	private void saveArticle(Article article) {
-		getLogger().debug("Saving article: {}", article.getTitle());
+		if (article == null) {
+			getLogger().error("Cannot save null article",
+					new NullPointerException("article to be saved cannot be null"));
+		} else if (article.getUrl() == null) {
+			getLogger().warn("Cannot save article with no url");
+		} else {
+			if (article.getId() == null) {
+				article.autoId();
+			}
+			try {
+				getLogger().debug("Saving article: {}", article);
+				this.articleModel.saveArticle(article);
+			} catch (Exception e) {
+				getLogger().error("Cannot save article", e);
+			}
+		}
 	}
 
 	private String nextUrl() {
-		synchronized (waitingForCrawlingUrls) {
-			if (waitingForCrawlingUrls.size() == 0) {
+		synchronized (waitingUrls) {
+			if (waitingUrls.size() == 0) {
 				return null;
 			}
-			return waitingForCrawlingUrls.remove(0);
+			return waitingUrls.remove(0);
 		}
 	}
 
@@ -289,7 +422,7 @@ public class CrawlingHandler extends BaseMessageHandler {
 		}
 	}
 
-	private void startWorkerForCrawling() {
+	private void startCrawlingWorker() {
 		for (int i = 0; i < numWorkers; i++) {
 			this.continueCrawling();
 		}
@@ -302,18 +435,130 @@ public class CrawlingHandler extends BaseMessageHandler {
 
 			@Override
 			public void call() {
-				if (waitingForCrawlingUrls.size() == 0) {
-					Collection<UrlBean> fetchAvailableUrl = urlModel.fetchAvailableUrls(rescanDelaySeconds * 1000);
+				if (waitingUrls.size() == 0) {
+					Collection<UrlBean> fetchAvailableUrl = urlModel.fetchAvailableUrls(rescanDelaySeconds * 10000);
 					for (UrlBean bean : fetchAvailableUrl) {
-						waitingForCrawlingUrls.add(bean.getUrl());
+						waitingUrls.add(bean.getUrl());
 					}
 				}
 				if (crawlingCount.get() == 0) {
-					startWorkerForCrawling();
+					startCrawlingWorker();
 				}
 			}
 		});
 
-		startWorkerForCrawling();
+		startCrawlingWorker();
+	}
+
+	@Override
+	public PuElement handle(Message message) {
+		if (message.getData() != null && message.getData() instanceof PuObject) {
+			PuObject data = (PuObject) message.getData();
+			String command = data.getString("command", data.getString("cmd", null));
+			if (command != null) {
+				try {
+					String[] groupLabels = new String[] { "a", "b", "c" };
+					switch (command) {
+					case "countDiseaseNumCasesByGroup": {
+						PuObject resultData = new PuObject();
+						for (String groupLabel : groupLabels) {
+							PuArray arr = new PuArrayList();
+							Collection<DiseaseNumCases> list = this.articleModel
+									.countDiseaseNumCasesByGroup(groupLabel);
+							for (DiseaseNumCases dnc : list) {
+								arr.addFrom(dnc.toPuObject());
+							}
+							resultData.set("group" + groupLabel.toUpperCase(), arr);
+						}
+						PuObject response = new PuObject();
+						response.set("data", resultData);
+						response.set("status", Status.OK.getCode());
+						return response;
+					}
+					case "fetchAllArticle": {
+						Collection<Article> articles = this.articleModel.fetchAll();
+						Map<String, Map<String, Collection<Article>>> diseaseToProvinceToArticle = new HashMap<>();
+						for (Article article : articles) {
+							if (!diseaseToProvinceToArticle.containsKey(article.getDisease())) {
+								diseaseToProvinceToArticle.put(article.getDisease(), new HashMap<>());
+							}
+							Map<String, Collection<Article>> provinceToArticle = diseaseToProvinceToArticle
+									.get(article.getDisease());
+
+							if (!provinceToArticle.containsKey(article.getProvince())) {
+								provinceToArticle.put(article.getProvince(), new HashSet<>());
+							}
+
+							Collection<Article> articleByProvinceAndDiseaseCollection = provinceToArticle
+									.get(article.getProvince());
+							articleByProvinceAndDiseaseCollection.add(article);
+						}
+						PuObject diseases = new PuObject();
+						for (Entry<String, Map<String, Collection<Article>>> diseaseToProvinceEntry : diseaseToProvinceToArticle
+								.entrySet()) {
+
+							PuArray provinces = new PuArrayList();
+							Map<String, Collection<Article>> provinceToArticles = diseaseToProvinceEntry.getValue();
+							for (Entry<String, Collection<Article>> provinceToArticlesEntry : provinceToArticles
+									.entrySet()) {
+
+								Collection<Article> articlesByProvince = provinceToArticlesEntry.getValue();
+								PuArray articleList = new PuArrayList();
+								for (Article article : articlesByProvince) {
+									articleList.addFrom(article.toPuObject());
+								}
+
+								PuObject province = new PuObject();
+								province.set("name", provinceToArticlesEntry.getKey());
+								province.set("contactInfo", "Nguyễn Văn A: 0901234567");
+								province.set("numberOfCases", articlesByProvince.size());
+								province.set("articles", articleList);
+
+								provinces.addFrom(province);
+							}
+
+							PuObject disease = new PuObject();
+							disease.set("name", diseaseToProvinceEntry.getKey());
+							disease.set("provinces", provinces);
+							diseases.set(diseaseToProvinceEntry.getKey(), disease);
+						}
+						return PuObject.fromObject(new MapTuple<>("status", Status.OK.getCode(), "data", diseases));
+					}
+					case "changeArticleStatus": {
+						String articleUUID = data.getString("articleId");
+						if (articleUUID != null) {
+							byte[] articleId = Converter.uuidToBytes(articleUUID);
+							String nextStatus = data.getString("status");
+							Integer statusValue = this.articleStatuses.get(nextStatus);
+							if (statusValue != null) {
+								if (this.articleModel.updateArticleStatus(articleId, statusValue.intValue())) {
+									return PuObject.fromObject(new MapTuple<>("status", Status.OK.getCode()));
+								} else {
+									return PuObject.fromObject(new MapTuple<>("status", Status.ERROR.getCode(),
+											"message", "Cannot update article status"));
+								}
+							} else {
+								return PuObject.fromObject(new MapTuple<>("status", Status.INVALID_PARAMETER.getCode(),
+										"message",
+										"status name is invalid, valid values are: accepted, rejected, ignored"));
+							}
+						} else {
+							return PuObject.fromObject(new MapTuple<>("status", Status.INVALID_PARAMETER.getCode(),
+									"message", "article id must be specific"));
+						}
+					}
+					}
+				} catch (Exception e) {
+					getLogger().error("Error while processing request: ", e);
+					return PuObject.fromObject(new MapTuple<>("status", Status.INTERNAL_SERVER_ERROR.getCode(),
+							"message", e.getMessage()));
+				}
+			} else {
+				return PuObject.fromObject(new MapTuple<>("status", Status.MISSING_COMMAND.getCode(), "message",
+						Status.MISSING_COMMAND.getMessage()));
+			}
+		}
+		return PuObject.fromObject(
+				new MapTuple<>("status", Status.UNKNOWN_ERROR.getCode(), "message", Status.UNKNOWN_ERROR.getMessage()));
 	}
 }

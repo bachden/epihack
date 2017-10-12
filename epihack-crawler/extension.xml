@@ -3,8 +3,20 @@
 
 	<external>
 		<configuration>
-			<name>keywordsConfig</name>
-			<path>conf/keywords.txt</path>
+			<name>diseasesConfig</name>
+			<path>conf/diseases.yaml</path>
+			<monitored>true</monitored>
+			<sensitivity>HIGH</sensitivity>
+			<parser>
+				<handler>com.mario.external.configuration.parser.YamlFileParser</handler>
+				<variables>
+					<variable name="wrapperClass" type="string">org.epihack.vn2017.crawler.Diseases</variable>
+				</variables>
+			</parser>
+		</configuration>
+		<configuration>
+			<name>provicesConfig</name>
+			<path>conf/provinces.txt</path>
 			<monitored>true</monitored>
 			<sensitivity>HIGH</sensitivity>
 			<parser>
@@ -37,7 +49,7 @@
 			<variables>
 				<!-- everything in this block will override config in file spec by properties file tag -->
 				<!-- the content will replace recursively the data in the ref property -->
-				<variable name="url" type="string">jdbc:mysql://localhost:3306/epihack_crawler</variable>
+				<variable name="url" type="string"><![CDATA[jdbc:mysql://localhost:3306/epihack_crawler?useUnicode=true&characterEncoding=UTF-8]]></variable>
 				<variable name="driverClassName" type="string">com.mysql.jdbc.Driver</variable>
 				<variable name="username" type="string">epihack</variable>
 				<variable name="password" type="string">123456</variable>
@@ -51,13 +63,43 @@
 		</sql>
 	</datasources>
 
+	<servers>
+		<http>
+			<name>http_server_port_10080</name>
+			<port>10080</port>
+			<options>no_sessions</options>
+		</http>
+	</servers>
+
+	<gateways>
+		<http>
+			<name>epihack_default_http_gateway</name>
+			<server>http_server_port_10080</server>
+			<path>/epihack</path>
+			<usemultipart>true</usemultipart>
+			<encoding>utf-8</encoding>
+			<async>true</async>
+			<header name="Access-Control-Allow-Origin">*</header>
+			<header name="Content-Type">text/html; charset=utf-8</header>
+			<workerpool>
+				<poolsize>8</poolsize>
+				<ringbuffersize>2048</ringbuffersize>
+				<threadnamepattern>Epihack HTTP Worker #%d</threadnamepattern>
+			</workerpool>
+		</http>
+	</gateways>
+
 	<lifecycles>
 		<handler>
 			<name>crawling-handler</name>
 			<handle>org.epihack.vn2017.crawler.CrawlingHandler</handle>
+			<bind>
+				<gateway>epihack_default_http_gateway</gateway>
+			</bind>
 			<variables>
 				<variable name="urlsConfig" type="string">urlsConfig</variable>
-				<variable name="keywordsConfig" type="string">keywordsConfig</variable>
+				<variable name="diseasesConfig" type="string">diseasesConfig</variable>
+				<variable name="provincesConfig" type="string">provicesConfig</variable>
 				<variable name="htmlExtractorConfig" type="String">htmlExtractorsConfig</variable>
 
 				<variable name="modelMappingFile" type="string">conf/model-mapping.properties</variable>

@@ -1,11 +1,15 @@
 package org.epihack.vn2017.crawler.extractor.impl;
 
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.epihack.vn2017.crawler.extractor.Article;
-import org.epihack.vn2017.crawler.extractor.Article.ArticleBuilder;
+import org.epihack.vn2017.crawler.db.bean.Article;
+import org.epihack.vn2017.crawler.db.bean.Article.ArticleBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,6 +19,11 @@ public class DefaultHtmlExtractor extends AbstractHtmlExtractor {
 
 	protected String getTimeSelector() {
 		return (String) this.getConfig().get("timeSelector");
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Map<String, String> getTimeFormat() {
+		return (Map<String, String>) this.getConfig().get("timeFormat");
 	}
 
 	protected String getTitleSelector() {
@@ -51,7 +60,36 @@ public class DefaultHtmlExtractor extends AbstractHtmlExtractor {
 
 	protected Date extractTime(Document document) {
 		String timeStr = this.getText(document, this.getTimeSelector());
-		getLogger().debug("Time string: " + timeStr);
+
+		Map<String, String> timeFormat = this.getTimeFormat();
+
+		String patternStr = timeFormat.get("pattern");
+
+		int dateGroupId = Integer.valueOf(timeFormat.get("dateGroupId"));
+		int monthGroupId = Integer.valueOf(timeFormat.get("monthGroupId"));
+		int yearGroupId = Integer.valueOf(timeFormat.get("yearGroupId"));
+		int hourGroupId = Integer.valueOf(timeFormat.get("hourGroupId"));
+		int minuteGroupId = Integer.valueOf(timeFormat.get("minuteGroupId"));
+
+		Pattern pattern = Pattern.compile(patternStr);
+		Matcher matcher = pattern.matcher(timeStr);
+		if (matcher.find()) {
+			String date = matcher.group(dateGroupId);
+			String month = matcher.group(monthGroupId);
+			String year = matcher.group(yearGroupId);
+			String hour = matcher.group(hourGroupId);
+			String minute = matcher.group(minuteGroupId);
+
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.DATE, Integer.valueOf(date));
+			cal.set(Calendar.MONTH, Integer.valueOf(month) - 1);
+			cal.set(Calendar.YEAR, Integer.valueOf(year));
+			cal.set(Calendar.HOUR_OF_DAY, Integer.valueOf(hour));
+			cal.set(Calendar.MINUTE, Integer.valueOf(minute));
+
+			return cal.getTime();
+		}
+
 		return null;
 	}
 
